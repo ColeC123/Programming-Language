@@ -12,6 +12,13 @@ typedef struct string {
 	int __size;
 } string;
 
+typedef struct string_list {
+	string* strings;
+	int len;
+	//Actual size of the data stored in memory
+	int __size;
+} string_list;
+
 // the init pointer must be null terminated, otherwise this function is unsafe
 int string_init(string* str, char* init) {
 	if (init != NULL) {
@@ -38,6 +45,13 @@ int string_init(string* str, char* init) {
 		str->__size = 1;
 		str->str = NULL;
 	}
+	return 0;
+}
+
+int string_list_init(string_list* list) {
+	list->len = 0;
+	list->__size = 1;
+	list->strings = NULL;
 	return 0;
 }
 
@@ -160,6 +174,47 @@ int string_substr(string* dest, string* src, int from, int to) {
 	return 0;
 }
 
+int string_find(string* dest, string* find) {
+	int index = -1;
+	if (dest->len - find->len == 0) {
+		int count = 0;
+		for (int i = 0; i < dest->len; i++) {
+			if (dest->str[i] == find->str[i]) {
+				count++;
+			}
+			else {
+				break;
+			}
+		}
+
+		if (count == dest->len) {
+			index = 0;
+		}
+	}
+	else {
+		for (int i = 0; i < dest->len - find->len; i++) {
+			if (dest->str[i] == find->str[0]) {
+				int count = 1;
+				for (int j = i + 1; j < i + find->len; j++) {
+					if (dest->str[j] == find->str[j - i]) {
+						count++;
+					}
+					else {
+						break;
+					}
+				}
+
+				if (count == find->len) {
+					index = i;
+					break;
+				}
+			}
+		}
+	}
+
+	return index;
+}
+
 int string_find_replace(string* dest, string* find, string* replace) {
 	if (dest->__size < dest->len - find->len + replace->len + 1) {
 		char* test = (char*)realloc(dest->str, 2 * (dest->len - find->len + replace->len + 1) * sizeof(char));
@@ -222,7 +277,7 @@ int string_find_replace(string* dest, string* find, string* replace) {
 	string_destroy(&s1);
 	string_destroy(&s2);
 
-	dest->len = dest->len - find->len + replace->len + 1;
+	dest->len = count;
 	return true;
 }
 
@@ -277,6 +332,56 @@ int string_append(string* str, char letter) {
 	str->str[str->len] = letter;
 	str->len++;
 	str->str[str->len] = '\0';
+	return 0;
+}
+
+int string_list_append(string_list* list, string str) {
+	if (list->len + 1 >= list->__size) {
+		list->__size *= 2;
+
+		string* test = (string*)realloc(list->strings, list->__size * sizeof(string));
+
+		if (test == NULL) {
+			printf("Failed to allocate memory in string_list_append function\n");
+			exit(-1);
+		}
+
+		list->strings = test;
+	}
+
+	list->strings[list->len] = str;
+	list->len++;
+	return 0;
+}
+
+int string_list_pop(string_list* list) {
+	if (list->len - 1 <= list->__size / 2) {
+		list->__size /= 2;
+
+		//If the size of the list somehow ends up at 0, then it will be set back to one
+		if (list->__size <= 0) {
+			list->__size = 1;
+		}
+
+		string* test = (string*)realloc(list->strings, list->__size * sizeof(string));
+
+		if (test == NULL) {
+			printf("Failed to allocate memory in string_list_pop\n");
+			exit(-1);
+		}
+
+		list->strings = test;
+	}
+
+	list->len--;
+	return 0;
+}
+
+int string_list_destroy(string_list* list) {
+	for (int i = 0; i < list->len; i++) {
+		string_destroy(&list->strings[i]);
+	}
+	free(list->strings);
 	return 0;
 }
 
