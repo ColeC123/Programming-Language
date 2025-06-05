@@ -303,6 +303,12 @@ int lexer(tokenList* list, string* input) {
 	string_init(&s2, NULL);
 	while (string_find_replace(input, &s1, &s2));
 
+	// This function will not work if tabs aren't removed because it relies on checking if the previous characters are spaces,
+	// so I will replace tabs with a single space to make this function work
+	string_set(&s1, "\t");
+	string_set(&s2, " ");
+	while (string_find_replace(input, &s1, &s2));
+
 	printf("%s\n\n", input->str);
 
 	string* tempstr = (string*)malloc(sizeof(string));

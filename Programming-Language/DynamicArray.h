@@ -92,7 +92,7 @@ int vector_pop(Vector* vec) {
 	return 0;
 }
 
-//WARNIGN: If each element of the array contains a pointer in it, then it is up to you to first free that memory
+//WARNING: If each element of the array contains a pointer in it, then it is up to you to first free that memory
 //since vector_destroy only cleans up the memory for the elements it points to, but not the memory that might
 //be pointed to by pointers in each individual element. An example where this would potentially come up is with
 //lists of lists

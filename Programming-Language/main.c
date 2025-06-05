@@ -6,6 +6,7 @@
 #include "Strings.h"
 #include "DynamicArray.h"
 #include "Lexer.h"
+#include "Parser.h"
 
 int main(void) {
 	string s1;
@@ -16,6 +17,9 @@ int main(void) {
 
 	lexer(&list, &s1);
 	tokenList_print(&list);
+
+	AST ast;
+	AST_init(&ast);
 
 	return 0;
 }
