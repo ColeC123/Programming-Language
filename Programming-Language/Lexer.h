@@ -281,8 +281,8 @@ int lexer_is_keyword(string* str, int index, int index2) {
 	else {
 		int end = index + keywords[index2].len;
 		return string_substr_cmp(str, index, &keywords[index2])
-			&& (str->str[index - 1] == ' ' || str->str[index - 1] == '\n')
-			&& (str->str[end] == ' ' || str->str[end] == '\n' || str->str[end] == '\0');
+			&& (str->str[index - 1] == ' ' || str->str[index - 1] == '\n' || str->str[index - 1] == '(' || str->str[index - 1] == ',')
+			&& (str->str[end] == ' ' || str->str[end] == '\n' || str->str[end] == '\0' || str->str[end] == ')' || str->str[end] == ',');
 	}
 }
 

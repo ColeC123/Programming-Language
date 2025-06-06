@@ -12,7 +12,7 @@ enum UP_RELATION_CONSTANTS {
 	UREL_ELSE_BODY = 3,
 	//There could be some situations where it might be useful to have no upwards relation indicated, but I can't think
 	//of any right now so I've added it just in case
-	UREL_IRRELEVENT = 4
+	UREL_IRRELEVENT = 4,
 };
 
 enum AST_TYPES {
@@ -23,6 +23,8 @@ enum AST_TYPES {
 	AST_SUBTRACT = 4,
 	AST_MULTIPLY = 5,
 	AST_DIVIDE = 6,
+	//The first node of the program in the AST
+	AST_ROOT = 7,
 };
 
 typedef struct AST_List {
@@ -36,6 +38,8 @@ typedef struct AST_List {
 } AST_List;
 
 // The abstract syntax tree used to determine the semantics of the string of tokens output by the lexer
+// Every single node should be treated as a pointer in order for the functions to work properly, even the root node
+// Example decleration of an AST would be AST* ast; AST_init(&ast);
 typedef struct AST {
 	//The index will be the index of a token with the list of tokens passed into the parser function
 	//This will simplify the process of freeing up memory at the end of program because the data for the tokens
@@ -48,6 +52,9 @@ typedef struct AST {
 	//type refers to what function or purpose the current node serves, such as whether it is a binary operator, a variable, etc.
 	int type;
 	AST_List list;
+	//Must be treated as a void pointer becaues visual studio compiler doesn't let you reference the pointer of a struct inside of
+	//itself
+	void* prevNode;
 } AST;
 
 void AST_List_init(AST_List* list) {
@@ -56,9 +63,12 @@ void AST_List_init(AST_List* list) {
 	list->arr = NULL;
 }
 
-void AST_init(AST* ast) {
-	AST_List_init(&ast->list);
-	ast->index = 0;
+void AST_init(AST** ast) {
+	*ast = (AST*)malloc(sizeof(AST));
+	AST_List_init(&(*ast)->list);
+	(*ast)->index = -1;
+	(*ast)->type = AST_ROOT;
+	(*ast)->upRelation = -1;
 }
 
 void AST_List_destroy(AST_List* list) {
@@ -106,6 +116,10 @@ void AST_List_pop(AST_List* list) {
 	}
 
 	list->len--;
+}
+
+void AST_descend(AST* ast, int index) {
+
 }
 
 int parser(tokenList* list, AST* ast) {

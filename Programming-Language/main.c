@@ -18,7 +18,7 @@ int main(void) {
 	lexer(&list, &s1);
 	tokenList_print(&list);
 
-	AST ast;
+	AST* ast;
 	AST_init(&ast);
 
 	return 0;
