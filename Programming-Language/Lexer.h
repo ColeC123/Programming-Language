@@ -277,7 +277,6 @@ void tokenList_print_individual(token tok) {
 	token_interpret_type(tok);
 	token_interpret_val(tok);
 	token_interpret_mdata(tok);
-	printf("\n");
 }
 
 // Returns true if current index is a keyword of the language

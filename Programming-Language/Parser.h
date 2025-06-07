@@ -15,6 +15,8 @@ enum UP_RELATION_CONSTANTS {
 	//There could be some situations where it might be useful to have no upwards relation indicated, but I can't think
 	//of any right now so I've added it just in case
 	UREL_IRRELEVENT = 4,
+	//For all of the nodes that have the root node as a parent
+	UREL_ROOT = 5,
 };
 
 enum AST_TYPES {
@@ -72,7 +74,7 @@ void AST_init(AST** ast) {
 	AST_List_init(&(*ast)->list);
 	(*ast)->token_index = -1;
 	(*ast)->type = AST_ROOT;
-	(*ast)->upRelation = -1;
+	(*ast)->upRelation = UREL_IRRELEVENT;
 	(*ast)->prevNode = NULL;
 	(*ast)->position = 0;
 }
@@ -137,7 +139,7 @@ int AST_descend(AST** ast, int index) {
 
 int AST_ascend(AST** ast) {
 	if ((**ast).prevNode != NULL) {
-		*ast = (AST*)(**ast).prevNode;
+		*ast = (AST*)((**ast).prevNode);
 		return true;
 	}
 	else {
@@ -179,27 +181,60 @@ void AST_print(tokenList* list, AST** ast) {
 	case UREL_IRRELEVENT:
 		printf("UREL: IRRELEVENT\n");
 		break;
+	case UREL_ROOT:
+		printf("UREL: ROOT\n");
+		break;
 	default:
 		printf("UREL: ERROR\n");
+	}
+
+	switch ((**ast).type) {
+	case AST_ASSIGN:
+		printf("AST TYPE: ASSIGN\n");
+		break;
+	case AST_LOOP_WHILE:
+		printf("AST TYPE: LOOP WHILE\n");
+		break;
+	case AST_LOOP_FOR:
+		printf("AST TYPE: LOOP FOR\n");
+		break;
+	case AST_ADD:
+		printf("AST TYPE: ADD\n");
+		break;
+	case AST_SUBTRACT:
+		printf("AST TYPE: SUBTRACT\n");
+		break;
+	case AST_MULTIPLY:
+		printf("AST TYPE: MULTIPLY\n");
+		break;
+	case AST_DIVIDE:
+		printf("AST TYPE: DIVIDE\n");
+		break;
+	case AST_ROOT:
+		printf("AST TYPE: ROOT\n");
+		break;
+	default:
+		printf("AST TYPE: ERROR\n");
 	}
 }
 
 //This is to make the process of debugging the AST easier to see if it is working properly
 //This function assumes you are entering the root node of the AST
 int AST_navigator(tokenList* list, AST** ast) {
-	bool shouldExit = false;
+	int shouldExit = false;
 	int layer = 0;
 	int node = 0;
 
 	//Clear the screen and set cursor position to home
 	printf("\x1b[2J\x1b[0;0H");
 
-	printf("\nCurrent Node:\n");
+	printf("Current Node:\n");
 	AST_print(list, ast);
 
 	printf("\n\nLayer: %d | Column: %d\n", layer, (**ast).position);
 
 	while (!shouldExit) {
+		int errorMessage = 0;
 		if (GetAsyncKeyState(VK_ESCAPE) & 0x01) {
 			shouldExit = true;
 			continue;
@@ -210,19 +245,26 @@ int AST_navigator(tokenList* list, AST** ast) {
 			printf("\x1b[2J\x1b[0;0H");
 
 			if (!AST_ascend(ast)) {
-				printf("Cannot Ascend any further; Root Node Reached\n\n");
+				errorMessage = 1;
 			}
 			else {
 				layer--;
 				node = (**ast).position;
-				printf("Parent Node:\n");
-				AST_print(list, (AST**)(&(**ast).prevNode));
+
+				if ((**ast).prevNode != NULL) {
+					printf("Parent Node:\n");
+					AST_print(list, (AST**)(&(**ast).prevNode));
+				}
 			}
 
-			printf("\nCurrent Node:\n");
+			printf("Current Node:\n");
 			AST_print(list, ast);
 
 			printf("\n\nLayer: %d | Column: %d\n", layer, node);
+
+			if (errorMessage == 1) {
+				printf("\n\x1b[31mCannot Ascend any further; Root Node Reached\x1b[0m\n\n");
+			}
 		}
 		else if (GetAsyncKeyState(VK_DOWN) & 0x01) {
 			//Clear the screen and set cursor position to home
@@ -230,7 +272,7 @@ int AST_navigator(tokenList* list, AST** ast) {
 
 			//For simplicity, this function will always descend down to the first node in the list
 			if (!AST_descend(ast, 0)) {
-				printf("Cannot descend any further\n\n");
+				errorMessage = 1;
 			}
 			else {
 				layer++;
@@ -244,14 +286,18 @@ int AST_navigator(tokenList* list, AST** ast) {
 			AST_print(list, ast);
 
 			printf("\n\nLayer: %d | Column: %d\n", layer, (**ast).position);
+
+			if (errorMessage == 1) {
+				printf("\n\x1b[31mCannot descend any further\x1b[0m\n\n");
+			}
 		}
 		else if (GetAsyncKeyState(VK_LEFT) & 0x01) {
 			//Clear the screen and set cursor position to home
 			printf("\x1b[2J\x1b[0;0H");
 
 			if ((AST*)((**ast).prevNode) != NULL) {
-				if ((**ast).position - 1 <= 0) {
-					printf("Cannot move left anymore; First node in list reached\n\n");
+				if ((**ast).position - 1 < 0) {
+					errorMessage = 1;
 				}
 				else {
 					node--;
@@ -270,14 +316,18 @@ int AST_navigator(tokenList* list, AST** ast) {
 				AST_print(list, ast);
 
 				printf("\n\nLayer: %d | Column: %d\n", layer, (**ast).position);
+
+				if (errorMessage == 1) {
+					printf("\n\x1b[31mCannot move left anymore; First node in list reached\x1b[0m\n\n");
+				}
 			}
 			else {
-				printf("Cannot move left; This is the only node in the list\n\n");
-
-				printf("\nCurrent Node:\n");
+				printf("Current Node:\n");
 				AST_print(list, ast);
 
 				printf("\n\nLayer: %d | Column: %d\n", layer, (**ast).position);
+
+				printf("\n\x1b[31mCannot move left; This is the only node in the list\x1b[0m\n");
 			}
 		}
 		else if (GetAsyncKeyState(VK_RIGHT) & 0x01) {
@@ -286,7 +336,7 @@ int AST_navigator(tokenList* list, AST** ast) {
 
 			if ((AST*)((**ast).prevNode) != NULL) {
 				if ((**ast).position + 1 >= ((AST*)((**ast).prevNode))->list.len) {
-					printf("Cannot move right anymore; Last node in list reached\n\n");
+					errorMessage = 1;
 				}
 				else {
 					node++;
@@ -300,14 +350,19 @@ int AST_navigator(tokenList* list, AST** ast) {
 				AST_print(list, ast);
 
 				printf("\n\nLayer: %d | Column: %d\n", layer, (**ast).position);
+
+				if (errorMessage == 1) {
+					printf("\n\x1b[31mCannot move right anymore; Last node in list reached\x1b[0m\n\n");
+				}
 			}
 			else {
-				printf("Cannot move right; This is the only node in the list\n\n");
 
-				printf("\nCurrent Node:\n");
+				printf("Current Node:\n");
 				AST_print(list, ast);
 
 				printf("\n\nLayer: %d | Column: %d\n", layer, (**ast).position);
+
+				printf("\n\x1b[31mCannot move right; This is the only node in the list\x1b[0m\n\n");
 			}
 		}
 	}
