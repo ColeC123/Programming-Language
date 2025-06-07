@@ -131,6 +131,7 @@
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DbgTools.h" />
     <ClInclude Include="DynamicArray.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Parser.h" />

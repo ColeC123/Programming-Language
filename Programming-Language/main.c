@@ -7,6 +7,7 @@
 #include "DynamicArray.h"
 #include "Lexer.h"
 #include "Parser.h"
+#include "DbgTools.h"
 
 int main(void) {
 	string s1;
@@ -39,7 +40,8 @@ int main(void) {
 	AST_append(&ast, (AST) { .type = AST_SUBTRACT, .upRelation = UREL_ELSE_BODY, .token_index = 1 });
 
 	AST_ascend(&ast);
-	AST_navigator(&list, &ast);
+	
+	Debug_navigator(&list, &ast);
 
 	return 0;
 }
