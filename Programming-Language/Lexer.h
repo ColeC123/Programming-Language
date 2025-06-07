@@ -31,9 +31,9 @@ enum LITERAL {
 };
 
 enum KEYWORD {
-	INT = 0,
-	FLOAT = 1,
-	STRING = 2
+	KEYWORD_INT = 0,
+	KEYWORD_FLOAT = 1,
+	KEYWORD_STRING = 2
 };
 
 //It is important that no altering string operations are done to these, as
@@ -212,37 +212,37 @@ void token_interpret_val(token tok) {
 	double temp;
 	switch (tok.type) {
 	case (enum TYPE)OPERATOR:
-		printf("VAL: %s\n", operators[tok.val].str);
+		printf("TOKEN: %s\n", operators[tok.val].str);
 		break;
 	case (enum TYPE)LITERAL:
 		if (tok.mdata == STRING_LITERAL) {
 			ptr = tok.val;
-			printf("VAL: %s\n", ptr->str);
+			printf("TOKEN: %s\n", ptr->str);
 		}
 		else if (tok.mdata == INT_LITERAL) {
-			printf("VAL: %lld\n", tok.val);
+			printf("TOKEN: %lld\n", tok.val);
 		}
 		else if (tok.mdata == FLOAT_LITERAL) {
 			temp = *(double*)(&tok.val);
-			printf("VAL: %lf\n", temp);
+			printf("TOKEN: %lf\n", temp);
 		}
 		break;
 	case (enum TYPE)IDENTIFIER:
 		ptr = tok.val;
-		printf("VAL: %s\n", ptr->str);
+		printf("TOKEN: %s\n", ptr->str);
 		break;
 	case (enum TYPE)KEYWORD:
-		printf("VAL: %s\n", keywords[tok.val].str);
+		printf("TOKEN: %s\n", keywords[tok.val].str);
 		break;
 	case (enum TYPE)PUNCTUATOR:
-		printf("VAL: %s\n", punctuators[tok.val].str);
+		printf("TOKEN: %s\n", punctuators[tok.val].str);
 		break;
 	case (enum TYPE)TYPE_UNDEFINED:
 		ptr = tok.val;
-		printf("VAL: %s\n", ptr->str);
+		printf("TOKEN: %s\n", ptr->str);
 		break;
 	default:
-		printf("Val: ERROR");
+		printf("TOKEN: ERROR\n");
 		break;
 	}
 }
@@ -273,6 +273,13 @@ void tokenList_print(tokenList* list) {
 	}
 }
 
+void tokenList_print_individual(token tok) {
+	token_interpret_type(tok);
+	token_interpret_val(tok);
+	token_interpret_mdata(tok);
+	printf("\n");
+}
+
 // Returns true if current index is a keyword of the language
 int lexer_is_keyword(string* str, int index, int index2) {
 	if (index == 0) {
@@ -281,6 +288,7 @@ int lexer_is_keyword(string* str, int index, int index2) {
 	else {
 		int end = index + keywords[index2].len;
 		return string_substr_cmp(str, index, &keywords[index2])
+			// The '(', ')', and ',' are included in the checks because keywords may show up inside function parameters
 			&& (str->str[index - 1] == ' ' || str->str[index - 1] == '\n' || str->str[index - 1] == '(' || str->str[index - 1] == ',')
 			&& (str->str[end] == ' ' || str->str[end] == '\n' || str->str[end] == '\0' || str->str[end] == ')' || str->str[end] == ',');
 	}
