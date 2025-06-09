@@ -46,6 +46,11 @@ int AST_navigator(tokenList* list, AST** ast) {
 				}
 			}
 
+			//This is done for formatting purposes so that things look nice
+			if (layer != 0) {
+				printf("\n");
+			}
+
 			printf("Current Node:\n");
 			AST_print(list, ast);
 

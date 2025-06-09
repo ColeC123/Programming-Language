@@ -29,6 +29,9 @@ enum AST_TYPES {
 	AST_DIVIDE = 6,
 	//The first node of the program in the AST
 	AST_ROOT = 7,
+	AST_FUNCTION_PARAMETER = 8,
+	AST_IDENTIFIER_VARIABLE = 9,
+	AST_IDENTIFIER_FUNCTION = 10,
 };
 
 typedef struct AST_List {
@@ -219,7 +222,7 @@ void AST_print(tokenList* list, AST** ast) {
 }
 
 int parser(tokenList* list, AST** ast) {
-
+	
 }
 
 #endif

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "Strings.h"
 #include "DynamicArray.h"
+#include "Vectors.h"
 #include <stdbool.h>
 #include <string.h>
 
@@ -30,10 +31,13 @@ enum LITERAL {
 	STRING_LITERAL = 2
 };
 
+//IMPORTANT: The order in which these keyword variable types are added to the enum must match the order they appear in the keywords
+//string list because of how the parser works.
 enum KEYWORD {
 	KEYWORD_INT = 0,
 	KEYWORD_FLOAT = 1,
-	KEYWORD_STRING = 2
+	KEYWORD_STRING = 2,
+	KEYWORD_VOID = 3,
 };
 
 //It is important that no altering string operations are done to these, as
@@ -48,12 +52,20 @@ string operators[] = {
 	{.str = ">", .len = 1, .__size = 2},
 };
 
+
+//This should be updated as more variable types are added
+#define NUM_VARIABLE_TYPES 4
 //It is important that no altering string operations are done to these, as
 //they can contain only constant values
+// 
+//IMPORTANT: The order in which these keyword strings are added to this array must match how they appear in the KEYWORD enum (by index)
+//in order for the parser to work correctly
 string keywords[] = {
 	{.str = "int", .len = 3, .__size = 4},
 	{.str = "float", .len = 5, .__size = 6},
-	{.str = "string", .len = 6, .__size = 7}
+	{.str = "string", .len = 6, .__size = 7},
+	{.str = "void", .len = 4, .__size = 5},
+	{.str = "return", .len = 6, .__size = 7},
 };
 
 //It is important that no altering string operations are done to these, as
@@ -248,19 +260,24 @@ void token_interpret_val(token tok) {
 }
 
 void token_interpret_mdata(token tok) {
-	switch (tok.mdata) {
-	case (enum LITERAL)INT_LITERAL:
-		printf("MDATA: INT_LITERAL\n");
-		break;
-	case (enum LITERAL)FLOAT_LITERAL:
-		printf("MDATA: FLOAT_LITERAL\n");
-		break;
-	case (enum LITERAL)STRING_LITERAL:
-		printf("MDATA: STRING_LITERAL\n");
-		break;
-	default:
-		printf("MDATA: NONE\n");
-		break;
+	if (tok.type == IDENTIFIER && tok.mdata >= 0 && tok.mdata < NUM_KEYWORDS) {
+		printf("MDATA: %s\n", keywords[tok.mdata].str);
+	}
+	else {
+		switch (tok.mdata) {
+		case (enum LITERAL)INT_LITERAL:
+			printf("MDATA: INT_LITERAL\n");
+			break;
+		case (enum LITERAL)FLOAT_LITERAL:
+			printf("MDATA: FLOAT_LITERAL\n");
+			break;
+		case (enum LITERAL)STRING_LITERAL:
+			printf("MDATA: STRING_LITERAL\n");
+			break;
+		default:
+			printf("MDATA: NONE\n");
+			break;
+		}
 	}
 }
 
@@ -294,7 +311,7 @@ int lexer_is_keyword(string* str, int index, int index2) {
 }
 
 int is_keyword_variable_type(int type) {
-	if (type < 3) {
+	if (type < NUM_VARIABLE_TYPES) {
 		return true;
 	}
 	else {
@@ -430,6 +447,9 @@ int lexer(tokenList* list, string* input) {
 	//This list will contain the identifiers found from the tokens output from the code above
 	string_list identifiers;
 	string_list_init(&identifiers);
+	//This will be a parallel list to the one above, and will keep track of the variable type for later use
+	Vector_Int identifiers_type;
+	Vector_Int_Init(&identifiers_type);
 
 	//This iteration will look for identifiers, and append them to a list of identifiers
 	//The reason the loop starts at 1 is because it has to look at the previous element, and if that happened at index 0
@@ -439,17 +459,17 @@ int lexer(tokenList* list, string* input) {
 		//to the heuristic I am using that would make the current token an identifier
 		if (list->tokens[i].type == TYPE_UNDEFINED && list->tokens[i - 1].type == KEYWORD && is_keyword_variable_type(list->tokens[i - 1].val)) {
 			string_list_append(&identifiers, *((string*)list->tokens[i].val));
+			Vector_Int_Append(&identifiers_type, list->tokens[i - 1].val);
 			list->tokens[i].type = IDENTIFIER;
+
+			//The mdata of the identifier will identify what type the identifier is (int, string, float, etc.). The way I have things set
+			//up this corresponds to being the .val of the keyword token, which itself corresponds to an index in the keywords string list
+			list->tokens[i].mdata = list->tokens[i - 1].val;
 		}
 	}
 
 	//Ideally in here there would be some sort of pass that checks to make sure that multiple identifiers of the same
 	//name haven't been used more than once and would spit out some sort of error, but that can be added later
-
-	for (int i = 0; i < identifiers.len; i++) {
-		printf("Identifier %d: %s\n", i + 1, identifiers.strings[i].str);
-	}
-	printf("\n");
 
 	//This loop properly identifies int_literals, float_literals, and identifiers from the remaining tokens that
 	//were marked as TYPE_UNDEFINED because they could not be determined in the first stage of the lexer
@@ -460,6 +480,7 @@ int lexer(tokenList* list, string* input) {
 
 				if (identifier_index != -1) {
 					list->tokens[i].type = IDENTIFIER;
+					list->tokens[i].mdata = identifiers_type.vec[j];
 					break;
 				}
 			}
@@ -525,6 +546,11 @@ int lexer(tokenList* list, string* input) {
 			}
 		}
 	}
+
+	//The only thing that has to be freed are the pointers to the strings themselves, not the actual memory of each buffer of each string
+	//pointed to by identifiers.strings
+	free(identifiers.strings);
+	Vector_Int_Destroy(&identifiers_type);
 }
 
 #endif

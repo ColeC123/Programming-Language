@@ -22,24 +22,7 @@ int main(void) {
 	AST* ast;
 	AST_init(&ast);
 
-	AST_append(&ast, (AST) {.type = AST_ASSIGN, .upRelation = UREL_BODY, .token_index = 0 });
-	AST_append(&ast, (AST) {.type = AST_ADD, .upRelation = UREL_IF_BODY, .token_index = 1 });
-	AST_append(&ast, (AST) {.type = AST_SUBTRACT, .upRelation = UREL_ELSE_BODY, .token_index = 2 });
-	AST_append(&ast, (AST) {.type = AST_MULTIPLY, .upRelation = UREL_CONDITION, .token_index = 3 });
-	AST_append(&ast, (AST) {.type = AST_DIVIDE, .upRelation = UREL_IRRELEVENT, .token_index = 4 });
-
-	AST_descend(&ast, 0);
-
-	AST_append(&ast, (AST) { .type = AST_ADD, .upRelation = UREL_CONDITION, .token_index = 4 });
-	AST_append(&ast, (AST) { .type = AST_ASSIGN, .upRelation = UREL_ROOT, .token_index = 3 });
-
-	AST_ascend(&ast);
-	AST_descend(&ast, 3);
-
-	AST_append(&ast, (AST) { .type = AST_MULTIPLY, .upRelation = UREL_BODY, .token_index = 2 });
-	AST_append(&ast, (AST) { .type = AST_SUBTRACT, .upRelation = UREL_ELSE_BODY, .token_index = 1 });
-
-	AST_ascend(&ast);
+	parser(&list, &ast);
 	
 	Debug_navigator(&list, &ast);
 
