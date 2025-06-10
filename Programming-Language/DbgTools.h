@@ -71,12 +71,16 @@ int AST_navigator(tokenList* list, AST** ast) {
 			else {
 				layer++;
 				node = 0;
+
+				printf("Parent Node:\n");
+				AST_print(list, (AST**)(&(**ast).prevNode));
 			}
 
-			printf("Parent Node:\n");
-			AST_print(list, (AST**)(&(**ast).prevNode));
-
-			printf("\nCurrent Node:\n");
+			//This is done for formatting purposes so that things look nice
+			if (layer != 0) {
+				printf("\n");
+			}
+			printf("Current Node:\n");
 			AST_print(list, ast);
 
 			printf("\n\nLayer: %d | Column: %d\n", layer, (**ast).position);

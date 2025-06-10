@@ -87,7 +87,7 @@ typedef struct token {
 	long long val;
 	enum TYPE type;
 	//Extra data, primarily for use with literals
-	int mdata;
+	unsigned int mdata;
 } token;
 
 typedef struct tokenList {
@@ -260,8 +260,15 @@ void token_interpret_val(token tok) {
 }
 
 void token_interpret_mdata(token tok) {
-	if (tok.type == IDENTIFIER && tok.mdata >= 0 && tok.mdata < NUM_KEYWORDS) {
-		printf("MDATA: %s\n", keywords[tok.mdata].str);
+	if (tok.type == IDENTIFIER) {
+		if (tok.mdata >> (sizeof(unsigned int) * 8 - 1) == 1) {
+			//The bitshifting in the printf function ensures that the leftmost bit is set to 0 when retrieving the keyword
+			//so that proper index is referenced
+			printf("MDATA: FUNCTION (RETURN TYPE: %s)\n", keywords[(tok.mdata << 1) >> 1].str);
+		}
+		else {
+			printf("MDATA: %s\n", keywords[tok.mdata].str);
+		}
 	}
 	else {
 		switch (tok.mdata) {
@@ -465,6 +472,17 @@ int lexer(tokenList* list, string* input) {
 			//The mdata of the identifier will identify what type the identifier is (int, string, float, etc.). The way I have things set
 			//up this corresponds to being the .val of the keyword token, which itself corresponds to an index in the keywords string list
 			list->tokens[i].mdata = list->tokens[i - 1].val;
+
+			//Check to see if the next token is a parentheses punctuator because that would indicate the current identifier is
+			//actually a function identifier, which needs to be specially identified. To do this, function identifiers will have
+			//their leftmost bit set to 1 in order to differentiate them from regular identifiers, while still preserving the type
+			//information because that indicates what the return type is
+			if (i < list->len - 1) {
+				if (list->tokens[i + 1].type == PUNCTUATOR && list->tokens[i + 1].val == 1) {
+					//This sets the leftmost bit to be 1
+					list->tokens[i].mdata = list->tokens[i].mdata ^ (1 << (sizeof(unsigned int) * 8 - 1));
+				}
+			}
 		}
 	}
 
